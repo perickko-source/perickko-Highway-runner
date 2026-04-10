@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>C1 Highway Runner - Mobile Optimized</title>
+  <title>C1 Highway Runner - Optimizado</title>
   <style>
     * { 
       -webkit-tap-highlight-color: transparent; 
@@ -15,29 +15,22 @@
       -webkit-user-select: none;
     }
     html, body {
-      margin: 0; 
-      padding: 0;
-      overflow: hidden; 
-      background: #000;
-      height: 100%;
-      width: 100%;
-      position: fixed;
+      margin: 0; padding: 0; overflow: hidden; background: #000;
+      height: 100%; width: 100%; position: fixed;
       font-family: 'Courier New', monospace;
+      display: flex; justify-content: center; align-items: center;
     }
     canvas {
-      box-shadow: 0 0 40px rgba(0,255,255,0.3);
       image-rendering: auto;
       image-rendering: -webkit-optimize-contrast;
       display: block;
-      width: 100%;
-      height: 100%;
+      /* El tamaño se controla por JS, no por CSS directo */
     }
     .screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.95); display: flex; flex-direction: column;
       justify-content: center; align-items: center; z-index: 1000;
       backdrop-filter: blur(8px);
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
     .screen.hidden { display: none; }
     h1 {
@@ -67,89 +60,45 @@
       box-shadow: 0 0 20px rgba(0, 204, 255, 0.6);
     }
 
-    /* UI DEL JUEGO - POSICIONES OPTIMIZADAS PARA MÓVIL */
+    /* UI DEL JUEGO */
     #ui { 
-      position: fixed; 
-      top: max(10px, env(safe-area-inset-top)); 
-      right: 10px; 
-      left: auto;
-      color: #fff; 
-      font-size: 16px; 
-      text-shadow: 2px 2px #000; 
-      pointer-events: none; 
-      z-index: 100;
-      text-align: right;
+      position: fixed; top: max(10px, env(safe-area-inset-top)); right: 10px; 
+      color: #fff; font-size: 16px; text-shadow: 2px 2px #000; 
+      pointer-events: none; z-index: 100; text-align: right;
     }
     #speed { color: #0ff; font-weight: bold; font-size: 24px; display: block; }
     
     #mobile-controls {
-      position: fixed; 
-      bottom: max(10px, env(safe-area-inset-bottom)); 
-      left: 50%; 
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.8); 
-      font-size: 13px; 
-      text-align: center;
-      pointer-events: none; 
-      z-index: 100; 
-      background: rgba(0,0,0,0.7); 
-      padding: 10px 20px; 
-      border-radius: 20px;
-      white-space: nowrap;
+      position: fixed; bottom: max(10px, env(safe-area-inset-bottom)); left: 50%; 
+      transform: translateX(-50%); color: rgba(255,255,255,0.8); font-size: 13px; 
+      text-align: center; pointer-events: none; z-index: 100; 
+      background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px; white-space: nowrap;
     }
     #brake-indicator {
-      position: fixed; 
-      top: 50%; left: 50%; 
-      transform: translate(-50%, -50%);
-      color: #ff0000; 
-      font-size: 48px; 
-      font-weight: bold; 
-      opacity: 0;
-      pointer-events: none; 
-      z-index: 200; 
-      text-shadow: 0 0 30px #f00;
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: #ff0000; font-size: 48px; font-weight: bold; opacity: 0;
+      pointer-events: none; z-index: 200; text-shadow: 0 0 30px #f00;
     }
     #brake-indicator.active { opacity: 0.8; }
 
     .audio-controls {
-      position: fixed; 
-      top: max(10px, env(safe-area-inset-top)); 
-      left: 10px; 
-      z-index: 100; 
-      display: flex; 
-      gap: 8px;
+      position: fixed; top: max(10px, env(safe-area-inset-top)); left: 10px; 
+      z-index: 100; display: flex; gap: 8px;
     }
     .audio-btn {
-      background: rgba(0,0,0,0.7); 
-      color: #fff; 
-      border: 1px solid #0ff;
-      padding: 8px 12px; 
-      cursor: pointer; 
-      border-radius: 5px; 
-      font-size: 12px;
+      background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #0ff;
+      padding: 8px 12px; cursor: pointer; border-radius: 5px; font-size: 12px;
     }
     .audio-btn.muted { opacity: 0.5; border-color: #666; }
 
-    /* Botón fullscreen para móvil */
     #fullscreenBtn {
-      position: fixed;
-      top: max(10px, env(safe-area-inset-top));
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 150;
-      background: rgba(0,255,255,0.2);
-      border: 1px solid #0ff;
-      color: #0ff;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 12px;
-      cursor: pointer;
-      display: none;
+      position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%;
+      transform: translateX(-50%); z-index: 150;
+      background: rgba(0,255,255,0.2); border: 1px solid #0ff;
+      color: #0ff; padding: 8px 16px; border-radius: 20px;
+      font-size: 12px; cursor: pointer; display: none;
     }
-    
-    @media (max-width: 768px) {
-      #fullscreenBtn { display: block; }
-    }
+    @media (max-width: 768px) { #fullscreenBtn { display: block; } }
   </style>
 </head>
 <body>
@@ -190,26 +139,17 @@
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-
-// Resolución base del juego
 const W = 1920, H = 960;
-let scale = 1;
 
-// Ajustar canvas al tamaño real de ventana
+// ✅ RESOLUCIÓN INTERNA FIJA (Evita huecos y artefactos)
+canvas.width = W;
+canvas.height = H;
+
 function resizeCanvas() {
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
-  
-  canvas.width = windowWidth;
-  canvas.height = windowHeight;
-  
-  // Calcular escala para mantener proporción
-  scale = Math.min(windowWidth / W, windowHeight / H);
-  
-  ctx.scale(scale, scale);
-  ctx.translate((windowWidth - W * scale) / 2 / scale, (windowHeight - H * scale) / 2 / scale);
+  const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
+  canvas.style.width = (W * scale) + 'px';
+  canvas.style.height = (H * scale) + 'px';
 }
-
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
@@ -217,7 +157,6 @@ resizeCanvas();
 const AudioSys = {
   ctx: null, musicEnabled: true, sfxEnabled: true, lastLaneChange: 0,
   init() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-  
   playLaneChange() {
     if (!this.ctx || !this.sfxEnabled) return; 
     const now = Date.now(); if (now - this.lastLaneChange < 200) return; this.lastLaneChange = now;
@@ -226,10 +165,8 @@ const AudioSys = {
     osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
     gain.gain.setValueAtTime(0.1, this.ctx.currentTime); 
     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-    osc.connect(gain); gain.connect(this.ctx.destination); 
-    osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+    osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime + 0.1);
   },
-  
   playCrash() {
     if (!this.ctx || !this.sfxEnabled) return;
     const bufferSize = this.ctx.sampleRate * 0.5; 
@@ -240,10 +177,8 @@ const AudioSys = {
     const gain = this.ctx.createGain(); 
     gain.gain.setValueAtTime(0.3, this.ctx.currentTime); 
     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
-    noise.connect(gain); gain.connect(this.ctx.destination); 
-    noise.start();
+    noise.connect(gain); gain.connect(this.ctx.destination); noise.start();
   },
-  
   playJump() {
     if (!this.ctx || !this.sfxEnabled) return;
     const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain(); osc.type = 'triangle';
@@ -251,10 +186,8 @@ const AudioSys = {
     osc.frequency.linearRampToValueAtTime(300, this.ctx.currentTime + 0.2);
     gain.gain.setValueAtTime(0.15, this.ctx.currentTime); 
     gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
-    osc.connect(gain); gain.connect(this.ctx.destination); 
-    osc.start(); osc.stop(this.ctx.currentTime + 0.25);
+    osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime + 0.25);
   },
-  
   toggleMusic() {
     this.musicEnabled = !this.musicEnabled;
     document.getElementById('bgMusic').muted = !this.musicEnabled;
@@ -270,42 +203,27 @@ const PARTICLE_MAX = 150;
 function spawnSmoke(x, y) {
   if (particles.length > PARTICLE_MAX) particles.splice(0, 20);
   particles.push({
-    x: x, y: y,
-    vx: -3 - Math.random() * 2,
-    vy: -1 + Math.random() * 2,
-    life: 0.8 + Math.random() * 0.4,
-    maxLife: 1.2,
-    size: 8 + Math.random() * 12,
-    type: 'smoke'
+    x: x, y: y, vx: -3 - Math.random() * 2, vy: -1 + Math.random() * 2,
+    life: 0.8 + Math.random() * 0.4, maxLife: 1.2, size: 8 + Math.random() * 12, type: 'smoke'
   });
 }
 
 function spawnSparks(x, y) {
   for (let i = 0; i < 25; i++) {
-    let angle = Math.random() * Math.PI * 2;
-    let speed = 4 + Math.random() * 8;
+    let angle = Math.random() * Math.PI * 2, speed = 4 + Math.random() * 8;
     particles.push({
-      x: x, y: y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: 0.3 + Math.random() * 0.3,
-      maxLife: 0.6,
-      size: 2 + Math.random() * 3,
-      type: 'spark',
-      hue: 30 + Math.random() * 30
+      x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      life: 0.3 + Math.random() * 0.3, maxLife: 0.6, size: 2 + Math.random() * 3,
+      type: 'spark', hue: 30 + Math.random() * 30
     });
   }
 }
 
 function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) {
-    let p = particles[i];
-    p.x += p.vx; p.y += p.vy; p.life -= 0.025;
-    if (p.type === 'smoke') {
-      p.size += 0.6; p.vy -= 0.04; p.vx *= 0.98;
-    } else if (p.type === 'spark') {
-      p.vy += 0.25; p.vx *= 0.96;
-    }
+    let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.025;
+    if (p.type === 'smoke') { p.size += 0.6; p.vy -= 0.04; p.vx *= 0.98; } 
+    else if (p.type === 'spark') { p.vy += 0.25; p.vx *= 0.96; }
     if (p.life <= 0) particles.splice(i, 1);
   }
 }
@@ -325,8 +243,7 @@ function drawParticles() {
   }
 }
 
-const bgMusic = document.getElementById('bgMusic'); 
-bgMusic.volume = 0.35;
+const bgMusic = document.getElementById('bgMusic'); bgMusic.volume = 0.35;
 
 const ALL_CARS = [
   { name: 'Perickko', file: 'perickko.png' }, { name: 'Pepino', file: 'pepino.png' },
@@ -335,11 +252,11 @@ const ALL_CARS = [
   { name: 'Valefor', file: 'valefor.png' }
 ];
 
-const images = {}; 
-ALL_CARS.forEach(c => { const img = new Image(); img.src = c.file; images[c.file] = img; });
+const images = {}; ALL_CARS.forEach(c => { const img = new Image(); img.src = c.file; images[c.file] = img; });
 
 const ROAD_Y = H - 288, LANE_HEIGHT = 115, LANE_TOP = ROAD_Y - LANE_HEIGHT, LANE_BOTTOM = ROAD_Y;
 
+let selectedCar = null;
 let player = {
   lane: 0, y: LANE_TOP, targetY: LANE_TOP, x: 288, speed: 0, maxSpeed: 6, w: 384, h: 254,
   isJumping: false, jumpY: 0, jumpVel: 0, jumpAngle: 0
@@ -352,13 +269,8 @@ function initMenu() {
   ALL_CARS.forEach(car => {
     const btn = document.createElement('div'); btn.className = 'car-btn';
     btn.innerHTML = `<img src="${car.file}"><span>${car.name}</span>`;
-    const select = () => { 
-      selectedCar = car; 
-      document.getElementById('menu').classList.add('hidden'); 
-      document.getElementById('radio-screen').classList.remove('hidden'); 
-    };
-    btn.addEventListener('click', select); 
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); select(); });
+    const select = () => { selectedCar = car; document.getElementById('menu').classList.add('hidden'); document.getElementById('radio-screen').classList.remove('hidden'); };
+    btn.addEventListener('click', select); btn.addEventListener('touchstart', (e) => { e.preventDefault(); select(); });
     grid.appendChild(btn);
   });
 }
@@ -374,39 +286,22 @@ function startGame() {
   document.getElementById('mobile-controls').classList.remove('hidden');
   document.getElementById('audioControls').classList.remove('hidden');
   gameActive = true;
-  
-  // Solicitar fullscreen en móvil
-  if (window.innerWidth < 768) {
-    setTimeout(() => toggleFullscreen(), 100);
-  }
+  if (window.innerWidth < 768) setTimeout(() => toggleFullscreen(), 100);
 }
 
 function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(e => console.log(e));
-  } else {
-    document.exitFullscreen();
-  }
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.log(e));
+  else document.exitFullscreen();
 }
 
-document.getElementById('musicBtn').addEventListener('click', () => { 
-  const e = AudioSys.toggleMusic(); 
-  document.getElementById('musicBtn').classList.toggle('muted', !e); 
-});
-document.getElementById('sfxBtn').addEventListener('click', () => { 
-  const e = AudioSys.toggleSFX(); 
-  document.getElementById('sfxBtn').classList.toggle('muted', !e); 
-});
+document.getElementById('musicBtn').addEventListener('click', () => { const e = AudioSys.toggleMusic(); document.getElementById('musicBtn').classList.toggle('muted', !e); });
+document.getElementById('sfxBtn').addEventListener('click', () => { const e = AudioSys.toggleSFX(); document.getElementById('sfxBtn').classList.toggle('muted', !e); });
 
 function generateBuildings() {
   buildings = []; let x = 0;
   while (x < W + 400) {
     let width = 115 + Math.random() * 192, height = 154 + Math.random() * 288;
-    buildings.push({ 
-      x, y: ROAD_Y - height, w: width, h: height, 
-      windows: Math.random() > 0.5, 
-      color: `hsl(${200 + Math.random() * 40}, ${20 + Math.random() * 20}%, ${20 + Math.random() * 15}%)` 
-    });
+    buildings.push({ x, y: ROAD_Y - height, w: width, h: height, windows: Math.random() > 0.5, color: `hsl(${200 + Math.random() * 40}, ${20 + Math.random() * 20}%, ${20 + Math.random() * 15}%)` });
     x += width - 19;
   }
 }
@@ -416,7 +311,6 @@ function spawnObstacle() {
   let laneY = lane === 0 ? LANE_TOP : LANE_BOTTOM;
   let rand = Math.random();
   let obs;
-  
   if (rand < 0.12) {
     obs = { x: W + 200, y: laneY, lane, isRamp: true, w: 220, h: 60 };
   } else {
@@ -428,104 +322,45 @@ function spawnObstacle() {
 }
 
 function drawRamp(obs) {
-  ctx.save();
-  ctx.translate(obs.x, obs.y + 40);
+  ctx.save(); ctx.translate(obs.x, obs.y + 40);
   ctx.fillStyle = '#ffaa00'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
   ctx.beginPath();
-  ctx.moveTo(-obs.w/2, obs.h/2);
-  ctx.lineTo(obs.w/2, obs.h/2);
-  ctx.lineTo(obs.w/2, -obs.h/2);
-  ctx.closePath();
-  ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(-30, 10, 20, 25); ctx.fillRect(20, -10, 20, 35);
+  ctx.moveTo(-obs.w/2, obs.h/2); ctx.lineTo(obs.w/2, obs.h/2); ctx.lineTo(obs.w/2, -obs.h/2);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillRect(-30, 10, 20, 25); ctx.fillRect(20, -10, 20, 35);
   ctx.restore();
 }
 
 let touchStartTime = 0, isBraking = false, touchTimer = null;
-
-function handleTouchStart(e) { 
-  e.preventDefault(); 
-  if (!gameActive) return; 
-  touchStartTime = Date.now(); 
-  isBraking = false; 
-  touchTimer = setTimeout(() => { 
-    isBraking = true; 
-    document.getElementById('brake-indicator').classList.add('active'); 
-  }, 200); 
-}
-
-function handleTouchEnd(e) { 
-  e.preventDefault(); 
-  if (!gameActive) return; 
-  clearTimeout(touchTimer); 
-  if (Date.now() - touchStartTime < 200 && !isBraking) { 
-    player.lane = player.lane === 0 ? 1 : 0; 
-    player.targetY = player.lane === 0 ? LANE_TOP : LANE_BOTTOM; 
-    AudioSys.playLaneChange();
-  } 
-  isBraking = false; 
-  document.getElementById('brake-indicator').classList.remove('active'); 
-}
-
+function handleTouchStart(e) { e.preventDefault(); if (!gameActive) return; touchStartTime = Date.now(); isBraking = false; touchTimer = setTimeout(() => { isBraking = true; document.getElementById('brake-indicator').classList.add('active'); }, 200); }
+function handleTouchEnd(e) { e.preventDefault(); if (!gameActive) return; clearTimeout(touchTimer); if (Date.now() - touchStartTime < 200 && !isBraking) { player.lane = player.lane === 0 ? 1 : 0; player.targetY = player.lane === 0 ? LANE_TOP : LANE_BOTTOM; AudioSys.playLaneChange(); } isBraking = false; document.getElementById('brake-indicator').classList.remove('active'); }
 canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
 canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
 
 window.addEventListener('keydown', e => {
-  if (e.code === 'ArrowUp' || e.code === 'Space') { 
-    player.lane = player.lane === 0 ? 1 : 0; 
-    player.targetY = player.lane === 0 ? LANE_TOP : LANE_BOTTOM; 
-    AudioSys.playLaneChange(); 
-  }
-  if (e.code === 'ArrowDown') { 
-    isBraking = true; 
-    document.getElementById('brake-indicator').classList.add('active'); 
-  }
+  if (e.code === 'ArrowUp' || e.code === 'Space') { player.lane = player.lane === 0 ? 1 : 0; player.targetY = player.lane === 0 ? LANE_TOP : LANE_BOTTOM; AudioSys.playLaneChange(); }
+  if (e.code === 'ArrowDown') { isBraking = true; document.getElementById('brake-indicator').classList.add('active'); }
 });
-
-window.addEventListener('keyup', e => { 
-  if (e.code === 'ArrowDown') { 
-    isBraking = false; 
-    document.getElementById('brake-indicator').classList.remove('active'); 
-  } 
-});
+window.addEventListener('keyup', e => { if (e.code === 'ArrowDown') { isBraking = false; document.getElementById('brake-indicator').classList.remove('active'); } });
 
 function drawCity() {
   let grad = ctx.createLinearGradient(0, 0, 0, ROAD_Y);
   grad.addColorStop(0, '#0a0a2e'); grad.addColorStop(0.5, '#1a1a3e'); grad.addColorStop(1, '#2a2a4e');
   ctx.fillStyle = grad; ctx.fillRect(0, 0, W, ROAD_Y);
-  
   buildings.forEach(b => {
     ctx.fillStyle = b.color; ctx.fillRect(b.x, b.y, b.w, b.h);
-    if (b.windows) { 
-      ctx.fillStyle = 'rgba(255,255,150,0.3)'; 
-      for (let wy = b.y+19; wy<b.y+b.h-19; wy+=48) 
-        for (let wx = b.x+19; wx<b.x+b.w-19; wx+=38) 
-          if (Math.random()>0.3) ctx.fillRect(wx,wy,23,29); 
-    }
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 4; 
-    ctx.strokeRect(b.x,b.y,b.w,b.h);
+    if (b.windows) { ctx.fillStyle = 'rgba(255,255,150,0.3)'; for (let wy = b.y+19; wy<b.y+b.h-19; wy+=48) for (let wx = b.x+19; wx<b.x+b.w-19; wx+=38) if (Math.random()>0.3) ctx.fillRect(wx,wy,23,29); }
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 4; ctx.strokeRect(b.x,b.y,b.w,b.h);
   });
 }
 
 function drawRoad() {
   ctx.fillStyle = '#333'; ctx.fillRect(0, ROAD_Y-LANE_HEIGHT, W, LANE_HEIGHT*2);
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; 
-  ctx.setLineDash([58, 58]); ctx.lineDashOffset = -roadOffset;
-  ctx.beginPath(); ctx.moveTo(0,ROAD_Y); ctx.lineTo(W,ROAD_Y); ctx.stroke(); 
-  ctx.setLineDash([]);
-  
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; 
-  ctx.beginPath(); 
-  ctx.moveTo(0,ROAD_Y-LANE_HEIGHT); ctx.lineTo(W,ROAD_Y-LANE_HEIGHT); 
-  ctx.moveTo(0,ROAD_Y+LANE_HEIGHT); ctx.lineTo(W,ROAD_Y+LANE_HEIGHT); 
-  ctx.stroke();
-  
-  let bp = Math.floor(roadOffset/77)%2===0?'#f00':'#fff'; 
-  ctx.fillStyle=bp; 
-  ctx.fillRect(0,ROAD_Y-LANE_HEIGHT-19,W,19); 
-  ctx.fillRect(0,ROAD_Y+LANE_HEIGHT,W,19);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.setLineDash([58, 58]); ctx.lineDashOffset = -roadOffset;
+  ctx.beginPath(); ctx.moveTo(0,ROAD_Y); ctx.lineTo(W,ROAD_Y); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(0,ROAD_Y-LANE_HEIGHT); ctx.lineTo(W,ROAD_Y-LANE_HEIGHT); ctx.moveTo(0,ROAD_Y+LANE_HEIGHT); ctx.lineTo(W,ROAD_Y+LANE_HEIGHT); ctx.stroke();
+  let bp = Math.floor(roadOffset/77)%2===0?'#f00':'#fff'; ctx.fillStyle=bp; ctx.fillRect(0,ROAD_Y-LANE_HEIGHT-19,W,19); ctx.fillRect(0,ROAD_Y+LANE_HEIGHT,W,19);
 }
 
 function drawPlayerSprite() {
@@ -558,14 +393,7 @@ function update() {
   player.y += (player.targetY - player.y) * 0.15;
   roadOffset += player.speed * 4;
   
-  buildings.forEach(b => { 
-    b.x -= player.speed * 1.5; 
-    if (b.x+b.w<0) { 
-      b.x=W+Math.random()*192; 
-      b.h=154+Math.random()*288; 
-      b.y=ROAD_Y-b.h; 
-    } 
-  });
+  buildings.forEach(b => { b.x -= player.speed * 1.5; if (b.x+b.w<0) { b.x=W+Math.random()*192; b.h=154+Math.random()*288; b.y=ROAD_Y-b.h; } });
   
   if (player.speed > 1) {
     let exhaustX = player.x - player.w/2 + 30;
@@ -575,46 +403,32 @@ function update() {
   }
   
   if (Math.random() < 0.01 + (player.speed/500)) {
-    let l=obstacles[obstacles.length-1]; 
-    if (!l || l.x<W-480) spawnObstacle();
+    let l=obstacles[obstacles.length-1]; if (!l || l.x<W-480) spawnObstacle();
   }
   
   for (let i=obstacles.length-1; i>=0; i--) {
     let o=obstacles[i]; o.x-=player.speed*4;
-    
     if (o.isRamp && !player.isJumping && player.lane === o.lane) {
       if (Math.abs(player.x - o.x) < 140) {
-        player.isJumping = true;
-        player.jumpVel = 16;
-        player.jumpAngle = -0.6;
-        AudioSys.playJump();
-        obstacles.splice(i, 1);
-        continue;
+        player.isJumping = true; player.jumpVel = 16; player.jumpAngle = -0.6;
+        AudioSys.playJump(); obstacles.splice(i, 1); continue;
       }
     }
-    
     if (!o.isRamp && player.lane===o.lane && Math.abs(player.x-o.x)<269) { 
-      player.speed*=0.3; 
-      obstacles.splice(i,1); 
-      AudioSys.playCrash();
+      player.speed*=0.3; obstacles.splice(i,1); AudioSys.playCrash();
       spawnSparks(player.x + player.w/2 - 20, player.y - player.jumpY);
       ctx.fillStyle='rgba(255,0,0,0.5)'; ctx.fillRect(0,0,W,H); 
     }
-    
     if (o.x<-384) { obstacles.splice(i,1); score+=10; }
   }
   
   if (player.isJumping) {
-    player.jumpY += player.jumpVel;
-    player.jumpVel -= 0.65;
+    player.jumpY += player.jumpVel; player.jumpVel -= 0.65;
     player.jumpAngle = Math.max(-0.8, Math.min(0.4, -player.jumpVel * 0.035));
-    if (player.jumpY <= 0) {
-      player.jumpY = 0; player.jumpVel = 0; player.jumpAngle = 0; player.isJumping = false;
-    }
+    if (player.jumpY <= 0) { player.jumpY = 0; player.jumpVel = 0; player.jumpAngle = 0; player.isJumping = false; }
   }
   
   updateParticles();
-  
   score += Math.floor(player.speed);
   document.getElementById('speed').innerText = Math.floor(player.speed*15);
   document.getElementById('dist').innerText = Math.floor(score/10);
@@ -622,23 +436,17 @@ function update() {
 
 function loop() {
   ctx.clearRect(0,0,W,H); 
-  drawCity(); 
-  drawRoad();
-  
-  let list=[]; 
-  obstacles.forEach(o=>list.push({t:'obs',o,y:o.y})); 
+  drawCity(); drawRoad();
+  let list=[]; obstacles.forEach(o=>list.push({t:'obs',o,y:o.y})); 
   if(gameActive) list.push({t:'p',o:player,y:player.y - player.jumpY});
   list.sort((a,b)=>a.y-b.y); 
   list.forEach(i=>i.t==='p'?drawPlayerSprite(): (i.o.isRamp ? drawRamp(i.o) : drawObstacleSprite(i.o)));
-  
   drawParticles();
   update(); 
   requestAnimationFrame(loop);
 }
 
-initMenu(); 
-generateBuildings(); 
-requestAnimationFrame(loop);
+initMenu(); generateBuildings(); requestAnimationFrame(loop);
 </script>
 </body>
 </html>
