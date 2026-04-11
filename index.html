@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>C1 Highway Runner - Ruedas Alineadas</title>
+  <title>C1 Highway Runner - Tamaño Unificado</title>
   <style>
     * { 
       -webkit-tap-highlight-color: transparent; 
@@ -242,15 +242,15 @@ function drawParticles() {
 
 const bgMusic = document.getElementById('bgMusic'); bgMusic.volume = 0.35;
 
-// 🚗 CONFIGURACIÓN DE COCHES (Y ALINEADO A 60 PARA TODOS)
+// 🚗 CONFIGURACIÓN DE COCHES (TUS AJUSTES DE RUEDAS INTACTOS)
 const ALL_CARS = [
-  { name: 'Perickko', file: 'perickko.png', wheels: { rearX: -120, frontX: 90, y: 60, radius: 34, rimRadius: 22 } },
-  { name: 'Pepino',   file: 'pepino.png',   wheels: { rearX: -115, frontX: 85, y: 60, radius: 32, rimRadius: 20 } },
+  { name: 'Perickko', file: 'perickko.png', wheels: { rearX: -125, frontX: 100, y: 60, radius: 34, rimRadius: 22 } },
+  { name: 'Pepino',   file: 'pepino.png',   wheels: { rearX: -125, frontX: 110, y: 55, radius: 32, rimRadius: 21 } },
   { name: 'Carlitos', file: 'carlitos.png', wheels: { rearX: -125, frontX: 95, y: 60, radius: 36, rimRadius: 24 } },
-  { name: 'Nandors',  file: 'nandors.png',  wheels: { rearX: -120, frontX: 90, y: 60, radius: 34, rimRadius: 22 } },
-  { name: 'Manoli',   file: 'manoli.png',   wheels: { rearX: -115, frontX: 85, y: 60, radius: 32, rimRadius: 20 } },
-  { name: 'Masme',    file: 'masme.png',    wheels: { rearX: -125, frontX: 95, y: 60, radius: 36, rimRadius: 24 } },
-  { name: 'Valefor',  file: 'valefor.png',  wheels: { rearX: -120, frontX: 90, y: 60, radius: 34, rimRadius: 22 } }
+  { name: 'Nandors',  file: 'nandors.png',  wheels: { rearX: -130, frontX: 78, y: 60, radius: 30, rimRadius: 22 } },
+  { name: 'Manoli',   file: 'manoli.png',   wheels: { rearX: -123, frontX: 103, y: 60, radius: 32, rimRadius: 20 } },
+  { name: 'Masme',    file: 'masme.png',    wheels: { rearX: -125, frontX: 105, y: 60, radius: 34, rimRadius: 22 } },
+  { name: 'Valefor',  file: 'valefor.png',  wheels: { rearX: -120, frontX: 100, y: 60, radius: 31, rimRadius: 22 } }
 ];
 
 const images = {}; 
@@ -258,9 +258,14 @@ ALL_CARS.forEach(c => { const img = new Image(); img.src = c.file; images[c.file
 
 const ROAD_Y = H - 288, LANE_HEIGHT = 115, LANE_TOP = ROAD_Y - LANE_HEIGHT, LANE_BOTTOM = ROAD_Y;
 
+// ✅ TAMAÑO UNIFICADO PARA TODOS LOS COCHES
+const CAR_W = 384;
+const CAR_H = 254;
+
 let selectedCar = null;
 let player = {
-  lane: 0, y: LANE_TOP, targetY: LANE_TOP, x: 288, speed: 0, maxSpeed: 6, w: 384, h: 254,
+  lane: 0, y: LANE_TOP, targetY: LANE_TOP, x: 288, speed: 0, maxSpeed: 6, 
+  w: CAR_W, h: CAR_H,
   isJumping: false, jumpY: 0, jumpVel: 0, jumpAngle: 0
 };
 
@@ -346,6 +351,7 @@ function generateBuildings() {
   }
 }
 
+// 🚀 GENERACIÓN DE OBSTÁCULOS CON TAMAÑO UNIFICADO
 function spawnObstacle() {
   let spawnX = Math.max(W + 200, minNextSpawnX);
   
@@ -358,7 +364,13 @@ function spawnObstacle() {
       let carX = spawnX + 500;
       let available = ALL_CARS.filter(c => c.file !== selectedCar.file);
       let type = available[Math.floor(Math.random() * available.length)];
-      obstacles.push({ x: carX, y: laneY, lane, type, isRamp: false, isComboTarget: true, w: 346, h: 230 });
+      
+      // ✅ OBSTÁCULO CON TAMAÑO UNIFICADO (384x254)
+      obstacles.push({ 
+        x: carX, y: laneY, lane, type, 
+        isRamp: false, isComboTarget: true, 
+        w: CAR_W, h: CAR_H  // ← ¡MISMO TAMAÑO QUE EL JUGADOR!
+      });
       
       minNextSpawnX = carX + 550; 
       
@@ -372,7 +384,13 @@ function spawnObstacle() {
       } else {
           let available = ALL_CARS.filter(c => c.file !== selectedCar.file);
           let type = available[Math.floor(Math.random() * available.length)];
-          obstacles.push({ x: spawnX, y: laneY, lane, type, isRamp: false, isComboTarget: false, w: 346, h: 230 });
+          
+          // ✅ OBSTÁCULO CON TAMAÑO UNIFICADO (384x254)
+          obstacles.push({ 
+            x: spawnX, y: laneY, lane, type, 
+            isRamp: false, isComboTarget: false, 
+            w: CAR_W, h: CAR_H  // ← ¡MISMO TAMAÑO QUE EL JUGADOR!
+          });
           minNextSpawnX = spawnX + 320;
       }
   }
@@ -439,31 +457,28 @@ function drawPlayerSprite() {
   ctx.translate(player.x, drawY);
   ctx.rotate(player.jumpAngle);
   
-  // Imagen del coche
   if (selectedCar && images[selectedCar.file]?.complete) {
     ctx.drawImage(images[selectedCar.file], -player.w/2, -player.h/2, player.w, player.h);
   } else {
     ctx.fillStyle = '#111'; ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
   }
 
-  // 🌀 DIBUJAR RUEDAS
   drawAnimatedWheels(selectedCar);
-  
   ctx.restore();
 }
 
-// 🚗 DIBUJAR OBSTÁCULOS
+// 🚗 DIBUJAR OBSTÁCULOS (CON TAMAÑO UNIFICADO)
 function drawObstacleSprite(obs) {
   ctx.save(); ctx.translate(obs.x, obs.y);
   
-  // Imagen
   if (!obs.isRamp && images[obs.type.file]?.complete) {
+    // ✅ Dibuja con el tamaño unificado CAR_W x CAR_H
     ctx.drawImage(images[obs.type.file], -obs.w/2, -obs.h/2, obs.w, obs.h);
   } else if (!obs.isRamp) {
     ctx.fillStyle = '#f00'; ctx.fillRect(-obs.w/2, -obs.h/2, obs.w, obs.h);
   }
   
-  // 🌀 DIBUJAR RUEDAS TAMBIÉN EN LOS OBSTÁCULOS
+  // 🌀 Las ruedas se dibujan con las mismas coordenadas porque el tamaño es el mismo
   drawAnimatedWheels(obs.type);
   
   ctx.restore();
@@ -508,6 +523,7 @@ function update() {
       }
     }
     
+    // ✅ DETECCIÓN DE COLISIÓN ACTUALIZADA AL NUEVO TAMAÑO (269 = mitad de 384 + margen)
     if (!o.isRamp && player.lane===o.lane && Math.abs(player.x-o.x)<269) { 
       if (o.isComboTarget && player.isJumping && player.jumpY > 120) {
         // Salto exitoso
