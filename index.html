@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>C1 Highway Runner - Optimizado</title>
+  <title>C1 Highway Runner - Ruedas Alineadas</title>
   <style>
     * { 
       -webkit-tap-highlight-color: transparent; 
@@ -24,7 +24,6 @@
       image-rendering: auto;
       image-rendering: -webkit-optimize-contrast;
       display: block;
-      /* El tamaño se controla por JS, no por CSS directo */
     }
     .screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -60,7 +59,6 @@
       box-shadow: 0 0 20px rgba(0, 204, 255, 0.6);
     }
 
-    /* UI DEL JUEGO */
     #ui { 
       position: fixed; top: max(10px, env(safe-area-inset-top)); right: 10px; 
       color: #fff; font-size: 16px; text-shadow: 2px 2px #000; 
@@ -141,7 +139,6 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const W = 1920, H = 960;
 
-// ✅ RESOLUCIÓN INTERNA FIJA (Evita huecos y artefactos)
 canvas.width = W;
 canvas.height = H;
 
@@ -245,14 +242,19 @@ function drawParticles() {
 
 const bgMusic = document.getElementById('bgMusic'); bgMusic.volume = 0.35;
 
+// 🚗 CONFIGURACIÓN DE COCHES (Y ALINEADO A 60 PARA TODOS)
 const ALL_CARS = [
-  { name: 'Perickko', file: 'perickko.png' }, { name: 'Pepino', file: 'pepino.png' },
-  { name: 'Carlitos', file: 'carlitos.png' }, { name: 'Nandors', file: 'nandors.png' },
-  { name: 'Manoli', file: 'manoli.png' }, { name: 'Masme', file: 'masme.png' }, 
-  { name: 'Valefor', file: 'valefor.png' }
+  { name: 'Perickko', file: 'perickko.png', wheels: { rearX: -120, frontX: 90, y: 60, radius: 34, rimRadius: 22 } },
+  { name: 'Pepino',   file: 'pepino.png',   wheels: { rearX: -115, frontX: 85, y: 60, radius: 32, rimRadius: 20 } },
+  { name: 'Carlitos', file: 'carlitos.png', wheels: { rearX: -125, frontX: 95, y: 60, radius: 36, rimRadius: 24 } },
+  { name: 'Nandors',  file: 'nandors.png',  wheels: { rearX: -120, frontX: 90, y: 60, radius: 34, rimRadius: 22 } },
+  { name: 'Manoli',   file: 'manoli.png',   wheels: { rearX: -115, frontX: 85, y: 60, radius: 32, rimRadius: 20 } },
+  { name: 'Masme',    file: 'masme.png',    wheels: { rearX: -125, frontX: 95, y: 60, radius: 36, rimRadius: 24 } },
+  { name: 'Valefor',  file: 'valefor.png',  wheels: { rearX: -120, frontX: 90, y: 60, radius: 34, rimRadius: 22 } }
 ];
 
-const images = {}; ALL_CARS.forEach(c => { const img = new Image(); img.src = c.file; images[c.file] = img; });
+const images = {}; 
+ALL_CARS.forEach(c => { const img = new Image(); img.src = c.file; images[c.file] = img; });
 
 const ROAD_Y = H - 288, LANE_HEIGHT = 115, LANE_TOP = ROAD_Y - LANE_HEIGHT, LANE_BOTTOM = ROAD_Y;
 
@@ -263,6 +265,44 @@ let player = {
 };
 
 let obstacles = [], buildings = [], roadOffset = 0, gameActive = false, score = 0;
+let minNextSpawnX = 0;
+let wheelRotation = 0;
+
+// 🌀 FUNCIÓN GLOBAL PARA DIBUJAR RUEDAS
+function drawAnimatedWheels(carConfig) {
+    if(!carConfig || !carConfig.wheels) return;
+    const w = carConfig.wheels;
+    
+    const wheelPositions = [
+      { x: w.rearX, y: w.y },   // Rueda trasera
+      { x: w.frontX, y: w.y }   // Rueda delantera
+    ];
+    
+    for(let wp of wheelPositions) {
+      ctx.save();
+      ctx.translate(wp.x, wp.y);
+      ctx.rotate(wheelRotation);
+      
+      // Neumático
+      ctx.fillStyle = '#0a0a0a';
+      ctx.beginPath(); ctx.arc(0, 0, w.radius, 0, Math.PI*2); ctx.fill();
+      
+      // Llanta
+      ctx.fillStyle = '#d0d0d0';
+      ctx.beginPath(); ctx.arc(0, 0, w.rimRadius, 0, Math.PI*2); ctx.fill();
+      
+      // Radios
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 4;
+      for(let s=0; s<5; s++) {
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(Math.cos(s * Math.PI*2/5)*w.rimRadius, Math.sin(s * Math.PI*2/5)*w.rimRadius);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+}
 
 function initMenu() {
   const grid = document.getElementById('car-options');
@@ -307,27 +347,56 @@ function generateBuildings() {
 }
 
 function spawnObstacle() {
-  let lane = Math.floor(Math.random() * 2);
-  let laneY = lane === 0 ? LANE_TOP : LANE_BOTTOM;
-  let rand = Math.random();
-  let obs;
-  if (rand < 0.12) {
-    obs = { x: W + 200, y: laneY, lane, isRamp: true, w: 220, h: 60 };
+  let spawnX = Math.max(W + 200, minNextSpawnX);
+  
+  if (Math.random() < 0.15) {
+      let lane = Math.floor(Math.random() * 2);
+      let laneY = lane === 0 ? LANE_TOP : LANE_BOTTOM;
+      
+      obstacles.push({ x: spawnX, y: laneY, lane, isRamp: true, isStunt: true, w: 220, h: 60 });
+      
+      let carX = spawnX + 500;
+      let available = ALL_CARS.filter(c => c.file !== selectedCar.file);
+      let type = available[Math.floor(Math.random() * available.length)];
+      obstacles.push({ x: carX, y: laneY, lane, type, isRamp: false, isComboTarget: true, w: 346, h: 230 });
+      
+      minNextSpawnX = carX + 550; 
+      
   } else {
-    let available = ALL_CARS.filter(c => c.file !== selectedCar.file);
-    let type = available[Math.floor(Math.random() * available.length)];
-    obs = { x: W + 200, y: laneY, lane, type, isRamp: false, w: 346, h: 230 };
+      let lane = Math.floor(Math.random() * 2);
+      let laneY = lane === 0 ? LANE_TOP : LANE_BOTTOM;
+      
+      if (Math.random() < 0.12) {
+          obstacles.push({ x: spawnX, y: laneY, lane, isRamp: true, isStunt: false, w: 220, h: 60 });
+          minNextSpawnX = spawnX + 320;
+      } else {
+          let available = ALL_CARS.filter(c => c.file !== selectedCar.file);
+          let type = available[Math.floor(Math.random() * available.length)];
+          obstacles.push({ x: spawnX, y: laneY, lane, type, isRamp: false, isComboTarget: false, w: 346, h: 230 });
+          minNextSpawnX = spawnX + 320;
+      }
   }
-  obstacles.push(obs);
 }
 
 function drawRamp(obs) {
-  ctx.save(); ctx.translate(obs.x, obs.y + 40);
-  ctx.fillStyle = '#ffaa00'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
+  ctx.save();
+  ctx.translate(obs.x, obs.y + 40);
+  ctx.fillStyle = obs.isStunt ? '#ff00ff' : '#ffaa00'; 
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
   ctx.beginPath();
-  ctx.moveTo(-obs.w/2, obs.h/2); ctx.lineTo(obs.w/2, obs.h/2); ctx.lineTo(obs.w/2, -obs.h/2);
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#fff'; ctx.fillRect(-30, 10, 20, 25); ctx.fillRect(20, -10, 20, 35);
+  ctx.moveTo(-obs.w/2, obs.h/2);
+  ctx.lineTo(obs.w/2, obs.h/2);
+  ctx.lineTo(obs.w/2, -obs.h/2);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(-30, 10, 20, 25); ctx.fillRect(20, -10, 20, 35);
+  
+  if (obs.isStunt) {
+    ctx.font = 'bold 40px monospace';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('!', -10, -10);
+  }
   ctx.restore();
 }
 
@@ -363,26 +432,40 @@ function drawRoad() {
   let bp = Math.floor(roadOffset/77)%2===0?'#f00':'#fff'; ctx.fillStyle=bp; ctx.fillRect(0,ROAD_Y-LANE_HEIGHT-19,W,19); ctx.fillRect(0,ROAD_Y+LANE_HEIGHT,W,19);
 }
 
+// 🚗 DIBUJAR JUGADOR
 function drawPlayerSprite() {
   ctx.save();
   let drawY = player.y - player.jumpY;
   ctx.translate(player.x, drawY);
   ctx.rotate(player.jumpAngle);
+  
+  // Imagen del coche
   if (selectedCar && images[selectedCar.file]?.complete) {
     ctx.drawImage(images[selectedCar.file], -player.w/2, -player.h/2, player.w, player.h);
   } else {
     ctx.fillStyle = '#111'; ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
   }
+
+  // 🌀 DIBUJAR RUEDAS
+  drawAnimatedWheels(selectedCar);
+  
   ctx.restore();
 }
 
+// 🚗 DIBUJAR OBSTÁCULOS
 function drawObstacleSprite(obs) {
   ctx.save(); ctx.translate(obs.x, obs.y);
+  
+  // Imagen
   if (!obs.isRamp && images[obs.type.file]?.complete) {
     ctx.drawImage(images[obs.type.file], -obs.w/2, -obs.h/2, obs.w, obs.h);
   } else if (!obs.isRamp) {
     ctx.fillStyle = '#f00'; ctx.fillRect(-obs.w/2, -obs.h/2, obs.w, obs.h);
   }
+  
+  // 🌀 DIBUJAR RUEDAS TAMBIÉN EN LOS OBSTÁCULOS
+  drawAnimatedWheels(obs.type);
+  
   ctx.restore();
 }
 
@@ -393,6 +476,8 @@ function update() {
   player.y += (player.targetY - player.y) * 0.15;
   roadOffset += player.speed * 4;
   
+  wheelRotation += player.speed * 0.12;
+  
   buildings.forEach(b => { b.x -= player.speed * 1.5; if (b.x+b.w<0) { b.x=W+Math.random()*192; b.h=154+Math.random()*288; b.y=ROAD_Y-b.h; } });
   
   if (player.speed > 1) {
@@ -402,33 +487,53 @@ function update() {
     for(let i=0; i<smokeCount; i++) spawnSmoke(exhaustX, exhaustY);
   }
   
-  if (Math.random() < 0.01 + (player.speed/500)) {
+  if (Math.random() < 0.015 + (player.speed/400)) {
     let l=obstacles[obstacles.length-1]; if (!l || l.x<W-480) spawnObstacle();
   }
   
   for (let i=obstacles.length-1; i>=0; i--) {
     let o=obstacles[i]; o.x-=player.speed*4;
+    
     if (o.isRamp && !player.isJumping && player.lane === o.lane) {
       if (Math.abs(player.x - o.x) < 140) {
-        player.isJumping = true; player.jumpVel = 16; player.jumpAngle = -0.6;
-        AudioSys.playJump(); obstacles.splice(i, 1); continue;
+        player.isJumping = true;
+        if (o.isStunt) {
+          player.jumpVel = 26; player.jumpAngle = -0.8;
+        } else {
+          player.jumpVel = 16; player.jumpAngle = -0.6;
+        }
+        AudioSys.playJump();
+        obstacles.splice(i, 1);
+        continue;
       }
     }
+    
     if (!o.isRamp && player.lane===o.lane && Math.abs(player.x-o.x)<269) { 
-      player.speed*=0.3; obstacles.splice(i,1); AudioSys.playCrash();
-      spawnSparks(player.x + player.w/2 - 20, player.y - player.jumpY);
-      ctx.fillStyle='rgba(255,0,0,0.5)'; ctx.fillRect(0,0,W,H); 
+      if (o.isComboTarget && player.isJumping && player.jumpY > 120) {
+        // Salto exitoso
+      } else {
+        player.speed *= 0.3; 
+        obstacles.splice(i,1); 
+        AudioSys.playCrash();
+        spawnSparks(player.x + player.w/2 - 20, player.y - player.jumpY);
+        ctx.fillStyle='rgba(255,0,0,0.5)'; ctx.fillRect(0,0,W,H); 
+      }
     }
+    
     if (o.x<-384) { obstacles.splice(i,1); score+=10; }
   }
   
   if (player.isJumping) {
-    player.jumpY += player.jumpVel; player.jumpVel -= 0.65;
+    player.jumpY += player.jumpVel;
+    player.jumpVel -= 0.65;
     player.jumpAngle = Math.max(-0.8, Math.min(0.4, -player.jumpVel * 0.035));
-    if (player.jumpY <= 0) { player.jumpY = 0; player.jumpVel = 0; player.jumpAngle = 0; player.isJumping = false; }
+    if (player.jumpY <= 0) {
+      player.jumpY = 0; player.jumpVel = 0; player.jumpAngle = 0; player.isJumping = false;
+    }
   }
   
   updateParticles();
+  
   score += Math.floor(player.speed);
   document.getElementById('speed').innerText = Math.floor(player.speed*15);
   document.getElementById('dist').innerText = Math.floor(score/10);
@@ -436,11 +541,14 @@ function update() {
 
 function loop() {
   ctx.clearRect(0,0,W,H); 
-  drawCity(); drawRoad();
+  drawCity(); 
+  drawRoad();
+  
   let list=[]; obstacles.forEach(o=>list.push({t:'obs',o,y:o.y})); 
   if(gameActive) list.push({t:'p',o:player,y:player.y - player.jumpY});
   list.sort((a,b)=>a.y-b.y); 
   list.forEach(i=>i.t==='p'?drawPlayerSprite(): (i.o.isRamp ? drawRamp(i.o) : drawObstacleSprite(i.o)));
+  
   drawParticles();
   update(); 
   requestAnimationFrame(loop);
