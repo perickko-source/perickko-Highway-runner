@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <title>Highway Runner - Optimized</title>
+  <title>Highway Runner - Shield Fix</title>
   <style>
     * { -webkit-tap-highlight-color: transparent; touch-action: none; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
     html, body { margin: 0; padding: 0; overflow: hidden; background: #000; height: 100%; width: 100%; position: fixed; font-family: 'Press Start 2P', cursive; display: flex; justify-content: center; align-items: center; }
@@ -226,7 +226,6 @@ function goToMenu() {
 document.getElementById('otherCarBtn').addEventListener('click', goToMenu);
 document.getElementById('otherCarBtn').addEventListener('touchstart', (e) => { e.preventDefault(); goToMenu(); });
 
-// 💾 GUARDADO EN SEGUNDO PLANO (Evita tirones)
 setInterval(() => {
   if(gameActive && score > lastCheckpoint) {
     lastCheckpoint = Math.floor(score);
@@ -392,7 +391,7 @@ function update(){
   
   for(let i=powerups.length-1;i>=0;i--){let p=powerups[i];p.x-=player.speed*4;if(player.lane===p.lane&&Math.abs(player.x-p.x)<70){p.collected=true;activatePowerup(p.type);if(p.type==='shield')spawnShieldPickup(p.x,p.y);else if(p.type==='turbo')spawnTurboPickup(p.x,p.y);else spawnX2Pickup(p.x,p.y);powerups.splice(i,1);continue;}if(p.x<-50)powerups.splice(i,1);}
   
-  // ✅ COLISIONES + ALTURA GATEADA (Depende ÚNICAMENTE de jumpY > 70)
+  // ✅ COLISIONES CON ESCUDO COMO PRIORIDAD ABSOLUTA
   for(let i=obstacles.length-1;i>=0;i--){
     let o=obstacles[i]; o.x-=player.speed*4;
     
@@ -416,7 +415,20 @@ function update(){
       }
     }
     
+    // Detección de colisión en carril
     if(!o.isRamp && player.lane===o.lane && Math.abs(player.x-o.x)<269){
+      // 🛡️ 1. ESCUDO: PRIORIDAD ABSOLUTA (Arregla el fallo con jabalíes y coches)
+      if(shieldTime > 0){
+        shieldTime -= 3000;
+        if(shieldTime <= 0) updatePowerupUI();
+        cleanupAudio(o);
+        obstacles.splice(i,1);
+        ctx.fillStyle='rgba(0,204,255,0.3)';ctx.fillRect(0,0,W,H);
+        spawnFloatingText(player.x, player.y-50, "BLOCKED!", "#00ccff");
+        continue;
+      }
+
+      // 🐗 2. JABALÍ (Sin escudo, crash directo)
       if(o.isBoar){
          cleanupAudio(o); score -= 100; spawnFloatingText(player.x, player.y-50, "CRASH! -100", "#f00"); 
          deactivatePowerups();
@@ -427,24 +439,20 @@ function update(){
          continue;
       }
 
-      // 🦘 SALTO MÚLTIPLE (Límite estricto: ALTURA > 70)
+      // 🦘 3. SALTO POR ALTURA (Ignora colisión)
       if(player.isJumping && player.jumpY > 70){
-        if(!o.scored){ score += 50; spawnFloatingText(player.x, player.y-80, "CLEARED! +50", "#0ff"); o.scored = true; }
-        continue; // Pasa por encima sin importar cuántos haya
+         if(!o.scored){ score += 50; spawnFloatingText(player.x, player.y-80, "CLEARED! +50", "#0ff"); o.scored = true; }
+         continue;
       }
 
-      if(o.isComboTarget && player.isJumping && player.jumpY > 70){}
-      else{
-        if(shieldTime>0){shieldTime-=3000;cleanupAudio(o);obstacles.splice(i,1);ctx.fillStyle='rgba(0,204,255,0.3)';ctx.fillRect(0,0,W,H);spawnFloatingText(player.x, player.y-50, "BLOCKED!", "#00ccff");}
-        else{
-          score -= 100; spawnFloatingText(player.x, player.y-50, "CRASH! -100", "#f00"); deactivatePowerups();
-          if(collectedStars>0){collectedStars=0;AudioSys.playCrash();spawnStarLoss(player.x,player.y-player.jumpY);document.getElementById('stars').innerText=collectedStars;}
-          else{player.speed*=0.3;AudioSys.playCrash();spawnSparks(player.x+player.w/2-20,player.y-player.jumpY);}
-          cleanupAudio(o);obstacles.splice(i,1);ctx.fillStyle='rgba(255,0,0,0.5)';ctx.fillRect(0,0,W,H); extraLives--; document.getElementById('lives').innerText = "❤️".repeat(Math.max(0, extraLives));
-          if (extraLives <= 0) { if (currentScore > highScore) { highScore = currentScore; localStorage.setItem('c1_highscore', highScore); } document.getElementById('ui').classList.add('hidden'); document.getElementById('mobile-controls').classList.add('hidden'); document.getElementById('go-score-val').innerText = numFmt.format(currentScore); document.getElementById('go-best-val').innerText = numFmt.format(highScore); document.getElementById('game-over-screen').classList.add('active'); gameActive = false; }
-        }
-      }
+      // 💥 4. CHOQUE NORMAL (Coche, combo fallido)
+      score -= 100; spawnFloatingText(player.x, player.y-50, "CRASH! -100", "#f00"); deactivatePowerups();
+      if(collectedStars>0){collectedStars=0;AudioSys.playCrash();spawnStarLoss(player.x,player.y-player.jumpY);document.getElementById('stars').innerText=collectedStars;}
+      else{player.speed*=0.3;AudioSys.playCrash();spawnSparks(player.x+player.w/2-20,player.y-player.jumpY);}
+      cleanupAudio(o);obstacles.splice(i,1);ctx.fillStyle='rgba(255,0,0,0.5)';ctx.fillRect(0,0,W,H); extraLives--; document.getElementById('lives').innerText = "❤️".repeat(Math.max(0, extraLives));
+      if (extraLives <= 0) { if (currentScore > highScore) { highScore = currentScore; localStorage.setItem('c1_highscore', highScore); } document.getElementById('ui').classList.add('hidden'); document.getElementById('mobile-controls').classList.add('hidden'); document.getElementById('go-score-val').innerText = numFmt.format(currentScore); document.getElementById('go-best-val').innerText = numFmt.format(highScore); document.getElementById('game-over-screen').classList.add('active'); gameActive = false; }
     }
+    
     if(o.x<-o.w-100){cleanupAudio(o);obstacles.splice(i,1);score+=10;}
   }
   
@@ -453,7 +461,6 @@ function update(){
 
   updateParticles();updatePowerupUI();drawPlayerEffects();
   
-  // ✅ ACTUALIZACIÓN UI OPTIMIZADA (Sin bloqueo)
   if(currentScore !== lastDisplayedScore){
     lastDisplayedScore = currentScore;
     document.getElementById('score-display').innerText = "PTS: " + numFmt.format(currentScore);
