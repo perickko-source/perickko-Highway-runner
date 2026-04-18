@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <title>Highway Runner - Shield Fix</title>
+  <title>Highway Runner - Optimized Shield</title>
   <style>
     * { -webkit-tap-highlight-color: transparent; touch-action: none; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
     html, body { margin: 0; padding: 0; overflow: hidden; background: #000; height: 100%; width: 100%; position: fixed; font-family: 'Press Start 2P', cursive; display: flex; justify-content: center; align-items: center; }
@@ -118,7 +118,6 @@ const AudioSys = {
   toggleSFX() { this.sfxEnabled=!this.sfxEnabled; return this.sfxEnabled; }
 };
 
-// 🎨 PARTÍCULAS
 let particles=[]; const PARTICLE_MAX=300;
 let floatingTexts=[]; const TEXT_MAX=20;
 
@@ -203,6 +202,46 @@ document.getElementById('menu-high-score').innerText = numFmt.format(highScore);
 let lastCheckpoint = 0;
 let lastUIUpdate = 0;
 let lastDisplayedScore = -1;
+
+// 🛣️ BORDES DIAGONALES (SOLO SUPERIOR)
+function drawDiagonalBorders() {
+  const BORDER_H = 19;
+  const STRIPE_W = 38;
+  const period = STRIPE_W * 2;
+  const shift = roadOffset % period;
+  
+  ctx.save();
+  ctx.lineWidth = STRIPE_W;
+  
+  function drawStripes(y) {
+    ctx.beginPath();
+    ctx.rect(0, y, W, BORDER_H);
+    ctx.clip();
+    
+    const count = Math.ceil(W / period) + 3;
+    
+    ctx.beginPath();
+    ctx.strokeStyle = '#8B0000'; // Rojo Oscuro
+    for(let i = -2; i < count; i++) {
+      let x = i * period - shift;
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + BORDER_H, y + BORDER_H);
+    }
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.strokeStyle = '#555555'; // Gris Asfalto
+    for(let i = -2; i < count; i++) {
+      let x = i * period + STRIPE_W - shift;
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + BORDER_H, y + BORDER_H);
+    }
+    ctx.stroke();
+  }
+  
+  drawStripes(ROAD_Y - LANE_HEIGHT - BORDER_H);
+  ctx.restore();
+}
 
 function drawAnimatedWheels(carConfig) { if(!carConfig||!carConfig.wheels)return; const w=carConfig.wheels; [{x:w.rearX,y:w.y},{x:w.frontX,y:w.y}].forEach(wp=>{ctx.save();ctx.translate(wp.x,wp.y);ctx.rotate(wheelRotation);ctx.fillStyle='#0a0a0a';ctx.beginPath();ctx.arc(0,0,w.radius,0,Math.PI*2);ctx.fill();ctx.fillStyle='#d0d0d0';ctx.beginPath();ctx.arc(0,0,w.rimRadius,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#666';ctx.lineWidth=4;for(let s=0;s<5;s++){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(s*Math.PI*2/5)*w.rimRadius,Math.sin(s*Math.PI*2/5)*w.rimRadius);ctx.stroke();}ctx.restore();}); }
 function drawStar(star) { ctx.save();ctx.translate(star.x,star.y); const pulse=(Math.sin(Date.now()/100+star.offset)+1)/2; const glow=ctx.createRadialGradient(0,0,10,0,0,40); glow.addColorStop(0,`rgba(255,255,200,${0.6+pulse*0.4})`);glow.addColorStop(0.5,`rgba(255,215,0,${0.3+pulse*0.3})`);glow.addColorStop(1,'rgba(255,165,0,0)'); ctx.fillStyle=glow;ctx.beginPath();ctx.arc(0,0,40,0,Math.PI*2);ctx.fill(); ctx.fillStyle='#ffd700';ctx.beginPath(); for(let i=0;i<10;i++){const a=(i*Math.PI/5)-Math.PI/2,r=i%2===0?18:8;i===0?ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r):ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);} ctx.closePath();ctx.fill(); ctx.fillStyle=`rgba(255,255,255,${0.5+pulse*0.3})`;ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill(); ctx.restore(); }
@@ -316,13 +355,48 @@ window.addEventListener('keydown',e=>{if(e.code==='ArrowUp'||e.code==='Space'){p
 window.addEventListener('keyup',e=>{if(e.code==='ArrowDown'){isBraking=false;document.getElementById('brake-indicator').classList.remove('active');}});
 
 function drawCity(){let grad=ctx.createLinearGradient(0,0,0,ROAD_Y);grad.addColorStop(0,'#0a0a2e');grad.addColorStop(0.5,'#1a1a3e');grad.addColorStop(1,'#2a2a4e');ctx.fillStyle=grad;ctx.fillRect(0,0,W,ROAD_Y);buildings.forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(b.x,b.y,b.w,b.h);if(b.windows){ctx.fillStyle='rgba(255,255,150,0.3)';for(let wy=b.y+19;wy<b.y+b.h-19;wy+=48)for(let wx=b.x+19;wx<b.x+b.w-19;wx+=38)if(Math.random()>0.3)ctx.fillRect(wx,wy,23,29);}ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=4;ctx.strokeRect(b.x,b.y,b.w,b.h);});}
-function drawRoad(){ctx.fillStyle='#333';ctx.fillRect(0,ROAD_Y-LANE_HEIGHT,W,LANE_HEIGHT*2);ctx.strokeStyle='#fff';ctx.lineWidth=8;ctx.setLineDash([58,58]);ctx.lineDashOffset=-roadOffset;ctx.beginPath();ctx.moveTo(0,ROAD_Y);ctx.lineTo(W,ROAD_Y);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(0,ROAD_Y-LANE_HEIGHT);ctx.lineTo(W,ROAD_Y-LANE_HEIGHT);ctx.moveTo(0,ROAD_Y+LANE_HEIGHT);ctx.lineTo(W,ROAD_Y+LANE_HEIGHT);ctx.stroke();let bp=Math.floor(roadOffset/77)%2===0?'#f00':'#fff';ctx.fillStyle=bp;ctx.fillRect(0,ROAD_Y-LANE_HEIGHT-19,W,19);ctx.fillRect(0,ROAD_Y+LANE_HEIGHT,W,19);}
+function drawRoad(){
+  ctx.fillStyle='#333';
+  ctx.fillRect(0,ROAD_Y-LANE_HEIGHT,W,LANE_HEIGHT*2);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=8;
+  ctx.setLineDash([58,58]); ctx.lineDashOffset=-roadOffset;
+  ctx.beginPath(); ctx.moveTo(0,ROAD_Y); ctx.lineTo(W,ROAD_Y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=8;
+  ctx.beginPath();
+  ctx.moveTo(0,ROAD_Y-LANE_HEIGHT); ctx.lineTo(W,ROAD_Y-LANE_HEIGHT);
+  ctx.moveTo(0,ROAD_Y+LANE_HEIGHT); ctx.lineTo(W,ROAD_Y+LANE_HEIGHT);
+  ctx.stroke();
+
+  drawDiagonalBorders();
+}
+// 🛡️ ESCUDO OPTIMIZADO (Opción 3: Gradiente Radial "Fake Glow")
 function drawPlayerSprite(){
-  ctx.save();let drawY = player.y - player.jumpY;ctx.translate(player.x, drawY);ctx.rotate(player.jumpAngle);
-  if(shieldTime>0){ctx.shadowColor='#00ffff';ctx.shadowBlur=60+Math.sin(Date.now()/100)*20;}
+  ctx.save();
+  let drawY = player.y - player.jumpY;
+  ctx.translate(player.x, drawY);
+  ctx.rotate(player.jumpAngle);
+
+  // NUEVO EFECTO DE ESCUDO (LIGERO)
+  if(shieldTime > 0){
+     let pulse = Math.sin(Date.now() / 100);
+     let radius = 220 + pulse * 30; // Halo grande pero suave
+     let g = ctx.createRadialGradient(0, 0, 50, 0, 0, radius);
+     // Centro brillante -> Medio azulado -> Borde transparente
+     g.addColorStop(0, `rgba(0, 255, 255, ${0.5 + pulse * 0.1})`); 
+     g.addColorStop(0.6, `rgba(0, 255, 255, 0.15)`);
+     g.addColorStop(1, `rgba(0, 255, 255, 0)`);
+     ctx.fillStyle = g;
+     ctx.beginPath();
+     ctx.arc(0, 0, radius, 0, Math.PI * 2);
+     ctx.fill();
+  }
+  
+  // Dibujo del coche (encima del brillo)
   if(selectedCar && images[selectedCar.file]?.complete) ctx.drawImage(images[selectedCar.file], -player.w/2, -player.h/2, player.w, player.h);
   else ctx.fillStyle='#111', ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
-  drawAnimatedWheels(selectedCar);ctx.restore();
+  drawAnimatedWheels(selectedCar);
+  ctx.restore();
 }
 
 function updatePowerupUI(){
@@ -366,7 +440,6 @@ function update(){
   let scoreMultiplier = Math.pow(2, x2Count);
   let currentScore = Math.trunc(score * scoreMultiplier);
 
-  // 📉 DIFICULTAD POR DISTANCIA (Inicio 25.000)
   let diffLevel = Math.max(0, Math.floor((roadOffset - 25000) / 25000));
   let minGap = Math.max(140, 300 - diffLevel * 40);
   let maxGap = Math.max(250, 500 - diffLevel * 50);
@@ -391,7 +464,6 @@ function update(){
   
   for(let i=powerups.length-1;i>=0;i--){let p=powerups[i];p.x-=player.speed*4;if(player.lane===p.lane&&Math.abs(player.x-p.x)<70){p.collected=true;activatePowerup(p.type);if(p.type==='shield')spawnShieldPickup(p.x,p.y);else if(p.type==='turbo')spawnTurboPickup(p.x,p.y);else spawnX2Pickup(p.x,p.y);powerups.splice(i,1);continue;}if(p.x<-50)powerups.splice(i,1);}
   
-  // ✅ COLISIONES CON ESCUDO COMO PRIORIDAD ABSOLUTA
   for(let i=obstacles.length-1;i>=0;i--){
     let o=obstacles[i]; o.x-=player.speed*4;
     
@@ -415,9 +487,7 @@ function update(){
       }
     }
     
-    // Detección de colisión en carril
     if(!o.isRamp && player.lane===o.lane && Math.abs(player.x-o.x)<269){
-      // 🛡️ 1. ESCUDO: PRIORIDAD ABSOLUTA (Arregla el fallo con jabalíes y coches)
       if(shieldTime > 0){
         shieldTime -= 3000;
         if(shieldTime <= 0) updatePowerupUI();
@@ -427,8 +497,6 @@ function update(){
         spawnFloatingText(player.x, player.y-50, "BLOCKED!", "#00ccff");
         continue;
       }
-
-      // 🐗 2. JABALÍ (Sin escudo, crash directo)
       if(o.isBoar){
          cleanupAudio(o); score -= 100; spawnFloatingText(player.x, player.y-50, "CRASH! -100", "#f00"); 
          deactivatePowerups();
@@ -438,21 +506,16 @@ function update(){
          if (extraLives <= 0) { if (currentScore > highScore) { highScore = currentScore; localStorage.setItem('c1_highscore', highScore); } document.getElementById('ui').classList.add('hidden'); document.getElementById('mobile-controls').classList.add('hidden'); document.getElementById('go-score-val').innerText = numFmt.format(currentScore); document.getElementById('go-best-val').innerText = numFmt.format(highScore); document.getElementById('game-over-screen').classList.add('active'); gameActive = false; }
          continue;
       }
-
-      // 🦘 3. SALTO POR ALTURA (Ignora colisión)
       if(player.isJumping && player.jumpY > 70){
          if(!o.scored){ score += 50; spawnFloatingText(player.x, player.y-80, "CLEARED! +50", "#0ff"); o.scored = true; }
          continue;
       }
-
-      // 💥 4. CHOQUE NORMAL (Coche, combo fallido)
       score -= 100; spawnFloatingText(player.x, player.y-50, "CRASH! -100", "#f00"); deactivatePowerups();
       if(collectedStars>0){collectedStars=0;AudioSys.playCrash();spawnStarLoss(player.x,player.y-player.jumpY);document.getElementById('stars').innerText=collectedStars;}
       else{player.speed*=0.3;AudioSys.playCrash();spawnSparks(player.x+player.w/2-20,player.y-player.jumpY);}
       cleanupAudio(o);obstacles.splice(i,1);ctx.fillStyle='rgba(255,0,0,0.5)';ctx.fillRect(0,0,W,H); extraLives--; document.getElementById('lives').innerText = "❤️".repeat(Math.max(0, extraLives));
       if (extraLives <= 0) { if (currentScore > highScore) { highScore = currentScore; localStorage.setItem('c1_highscore', highScore); } document.getElementById('ui').classList.add('hidden'); document.getElementById('mobile-controls').classList.add('hidden'); document.getElementById('go-score-val').innerText = numFmt.format(currentScore); document.getElementById('go-best-val').innerText = numFmt.format(highScore); document.getElementById('game-over-screen').classList.add('active'); gameActive = false; }
     }
-    
     if(o.x<-o.w-100){cleanupAudio(o);obstacles.splice(i,1);score+=10;}
   }
   
