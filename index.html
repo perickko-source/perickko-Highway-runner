@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <title>Highway Runner - Optimized Shield</title>
+  <title>Highway Runner - El Jefe & La Jefa</title>
   <style>
     * { -webkit-tap-highlight-color: transparent; touch-action: none; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
     html, body { margin: 0; padding: 0; overflow: hidden; background: #000; height: 100%; width: 100%; position: fixed; font-family: 'Press Start 2P', cursive; display: flex; justify-content: center; align-items: center; }
@@ -172,7 +172,9 @@ const ALL_CARS = [
   {name:'Rafa',file:'rafa.png',music:'rafa.ogg',wheels:{rearX:-116,frontX:105,y:64,radius:27,rimRadius:18}},
   {name:'Deivid',file:'deivid.png',music:'deivid.ogg',wheels:{rearX:-131,frontX:91,y:57,radius:31,rimRadius:21}},
   {name:'Jordi',file:'jordi.png',music:'jordi.ogg',wheels:{rearX:-126,frontX:91,y:60,radius:30,rimRadius:21}},
-  {name:'Skelemetor',file:'skelemetor.png',music:'skelemetor.ogg',wheels:{rearX:-129,frontX:116,y:55,radius:32,rimRadius:22}}
+  {name:'Skelemetor',file:'skelemetor.png',music:'skelemetor.ogg',wheels:{rearX:-129,frontX:116,y:55,radius:32,rimRadius:22}},
+  {name:'ElJefe',file:'eljefe.png',music:'eljefe.ogg',wheels:{rearX:-122,frontX:108,y:61,radius:31,rimRadius:21}},
+  {name:'LaJefa',file:'lajefa.png',music:'lajefa.ogg',wheels:{rearX:-120,frontX:103,y:61,radius:30,rimRadius:20}}
 ];
 const OBSTACLE_CARS = [
   {name:'ambulancia',file:'ambulancia.png',music:'ambulancia.ogg',sound:'ambulancia',wheels:{rearX:-130,frontX:172,y:78,radius:37,rimRadius:21}},
@@ -203,7 +205,6 @@ let lastCheckpoint = 0;
 let lastUIUpdate = 0;
 let lastDisplayedScore = -1;
 
-// 🛣️ BORDES DIAGONALES (SOLO SUPERIOR)
 function drawDiagonalBorders() {
   const BORDER_H = 19;
   const STRIPE_W = 38;
@@ -221,7 +222,7 @@ function drawDiagonalBorders() {
     const count = Math.ceil(W / period) + 3;
     
     ctx.beginPath();
-    ctx.strokeStyle = '#8B0000'; // Rojo Oscuro
+    ctx.strokeStyle = '#8B0000';
     for(let i = -2; i < count; i++) {
       let x = i * period - shift;
       ctx.moveTo(x, y);
@@ -230,7 +231,7 @@ function drawDiagonalBorders() {
     ctx.stroke();
     
     ctx.beginPath();
-    ctx.strokeStyle = '#555555'; // Gris Asfalto
+    ctx.strokeStyle = '#555555';
     for(let i = -2; i < count; i++) {
       let x = i * period + STRIPE_W - shift;
       ctx.moveTo(x, y);
@@ -370,19 +371,17 @@ function drawRoad(){
 
   drawDiagonalBorders();
 }
-// 🛡️ ESCUDO OPTIMIZADO (Opción 3: Gradiente Radial "Fake Glow")
+
 function drawPlayerSprite(){
   ctx.save();
   let drawY = player.y - player.jumpY;
   ctx.translate(player.x, drawY);
   ctx.rotate(player.jumpAngle);
 
-  // NUEVO EFECTO DE ESCUDO (LIGERO)
   if(shieldTime > 0){
      let pulse = Math.sin(Date.now() / 100);
-     let radius = 220 + pulse * 30; // Halo grande pero suave
+     let radius = 220 + pulse * 30; 
      let g = ctx.createRadialGradient(0, 0, 50, 0, 0, radius);
-     // Centro brillante -> Medio azulado -> Borde transparente
      g.addColorStop(0, `rgba(0, 255, 255, ${0.5 + pulse * 0.1})`); 
      g.addColorStop(0.6, `rgba(0, 255, 255, 0.15)`);
      g.addColorStop(1, `rgba(0, 255, 255, 0)`);
@@ -392,7 +391,6 @@ function drawPlayerSprite(){
      ctx.fill();
   }
   
-  // Dibujo del coche (encima del brillo)
   if(selectedCar && images[selectedCar.file]?.complete) ctx.drawImage(images[selectedCar.file], -player.w/2, -player.h/2, player.w, player.h);
   else ctx.fillStyle='#111', ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
   drawAnimatedWheels(selectedCar);
